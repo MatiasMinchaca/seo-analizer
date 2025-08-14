@@ -32,7 +32,7 @@ def parse_page(url, html, base_netloc):
     external_links = set()
     for a in soup.find_all("a", href=True):
         href = a["href"]
-        if not href or href.startswith("#") or href.startswith("mailto:") or href.startswith("tel:"):
+        if not href or href.startswith(('#', 'mailto:', 'tel:')):
             continue
         
         full_url = urljoin(url, href)
@@ -40,21 +40,30 @@ def parse_page(url, html, base_netloc):
         normalized_link = normalize_url(full_url)
         parsed_full_url = urlparse(normalized_link)
 
-        if parsed_full_url.netloc == base_netloc:
+        if parsed_full_url.netloc.replace("www.", "") == base_netloc:
             internal_links.add(normalized_link)
         else:
             external_links.add(normalized_link)
 
-    # --- Images ---
+    # --- Images (with lazy loading and data URI handling) ---
     images = []
     for img in soup.find_all("img"):
-        src = img.get("src", "")
-        if src:
-            full_src_url = urljoin(url, src)
-            images.append({"src": full_src_url, "alt": img.get("alt", "").strip()})
+        # Prioritize data-src for lazy-loaded images, then fall back to src
+        src = img.get('data-src') or img.get('src', '')
+        src = src.strip()
+
+        # Ignore empty and data URIs
+        if not src or src.startswith('data:image'):
+            continue
+
+        # Prioritize data-alt for lazy-loaded images, then fall back to alt
+        alt = img.get('data-alt') or img.get('alt', '')
+        
+        full_src_url = urljoin(url, src)
+        images.append({"src": full_src_url, "alt": alt.strip()})
 
     return {
-        "url": url, # The original, non-normalized URL is the key
+        "url": url,
         "title": title,
         "meta_descriptions": meta_descriptions,
         "h1s": h1s,
