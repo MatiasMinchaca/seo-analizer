@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 import hashlib
+from utils import normalize_url
 
 def parse_page(url, html, base_netloc):
     """Extracts all relevant SEO data from a single HTML page."""
@@ -18,7 +19,8 @@ def parse_page(url, html, base_netloc):
 
     # --- Canonicals ---
     canonical_tags = soup.find_all("link", rel="canonical")
-    canonicals = [tag["href"].strip() for tag in canonical_tags if tag.has_attr("href")]
+    # Normalize canonical URLs as well
+    canonicals = [normalize_url(tag["href"].strip()) for tag in canonical_tags if tag.has_attr("href")]
 
     # --- Content Analysis ---
     text_content = soup.get_text(separator=' ', strip=True)
@@ -34,12 +36,14 @@ def parse_page(url, html, base_netloc):
             continue
         
         full_url = urljoin(url, href)
-        parsed_full_url = urlparse(full_url)
+        # Normalize every link found
+        normalized_link = normalize_url(full_url)
+        parsed_full_url = urlparse(normalized_link)
 
         if parsed_full_url.netloc == base_netloc:
-            internal_links.add(full_url)
+            internal_links.add(normalized_link)
         else:
-            external_links.add(full_url)
+            external_links.add(normalized_link)
 
     # --- Images ---
     images = []
@@ -50,7 +54,7 @@ def parse_page(url, html, base_netloc):
             images.append({"src": full_src_url, "alt": img.get("alt", "").strip()})
 
     return {
-        "url": url,
+        "url": url, # The original, non-normalized URL is the key
         "title": title,
         "meta_descriptions": meta_descriptions,
         "h1s": h1s,
