@@ -1,4 +1,6 @@
 import requests
+import time
+import random 
 from collections import deque
 from urllib.parse import urlparse
 from parser import parse_page
@@ -24,9 +26,17 @@ def crawl_site(base_url, max_pages):
     visited = {start_url}
     base_netloc = urlparse(start_url).netloc.replace("www.", "")
 
+    next_pause_at = random.randint(50, 100)
+    
     while queue and len(crawled_data) < max_pages:
         url = queue.popleft()
         print(f"Crawling [{len(crawled_data) + 1}/{max_pages}]: {url}")
+
+        if len(crawled_data) > 0 and (len(crawled_data) % 100 == 0 or len(crawled_data) == next_pause_at):
+            wait_time = random.randint(300, 800)  # 5 a 10 minutos en segundos
+            print(f"Pausing for {wait_time // 60} minutes ({wait_time} seconds) to avoid being blocked...")
+            time.sleep(wait_time)
+            next_pause_at = len(crawled_data) + random.randint(30, 80)
 
         try:
             head_response = requests.head(url, headers=HEADERS, timeout=5, allow_redirects=True)
@@ -39,7 +49,7 @@ def crawl_site(base_url, max_pages):
             
             if "text/html" not in content_type:
                 print(f"  -> Skipping non-HTML content: {content_type}")
-                visited.add(final_url) # Mark as visited so we don't check it again
+                visited.add(final_url)
                 continue
 
         except requests.RequestException as e:
