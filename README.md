@@ -7,10 +7,12 @@ This is a Python-based SEO auditing tool that crawls a website to analyze its on
 - **Comprehensive SEO Checks:** Analyzes dozens of factors, including:
   - **Titles:** Missing, duplicate, short, and long titles.
   - **Meta Descriptions:** Missing, duplicate, short, and long descriptions.
-  - **Headings:** Missing or duplicate H1 tags, long H1s, multiple H1s.
+  - **Headings:** Missing or duplicate H1/H2 tags, long H1s/H2s, multiple H1s/H2s.
   - **Content:** Low word count pages.
   - **Images:** Images missing alt text and (optionally) images with a large file size.
   - **Canonicals:** Missing, multiple, or non-self-referencing canonical tags.
+  - **Broken Links:** Identifies 4xx (client error) and 5xx (server error) status codes for internal page links and sitemap URLs.
+  - **Sitemap Analysis:** Compares crawled URLs with sitemap URLs to find discrepancies and broken links within the sitemap.
 - **Styled Excel Reports:** Generates a professional `.xlsx` report with issues separated into sheets, including descriptions and recommendations.
 - **Interactive Execution:** Prompts for the target URL and page limit at runtime.
 - **Configurable:** Advanced options can be configured in the `config.py` file.
@@ -33,8 +35,7 @@ pip install requests beautifulsoup4 pandas openpyxl
 
 1.  **Configure the Audit (Optional):**
     - Open the `config.py` file.
-    - To enable the check for large images (which can be slow), set `ENABLE_IMAGE_SIZE_CHECK = True`.
-    - You can also adjust other thresholds like title length, word count, and image size limits.
+    - You can adjust thresholds like title length, H1 length, H2 length, word count, and image size limits.
 
 2.  **Execute the Script:**
     - Open your terminal or command prompt.
@@ -47,6 +48,9 @@ pip install requests beautifulsoup4 pandas openpyxl
 3.  **Provide Input:**
     - The script will prompt you to enter the **Base URL** you want to audit.
     - It will then ask for the **maximum number of pages** to crawl.
+    - You will be asked if you want to **enable image size check (y/n)**.
+    - You will be asked if you want to **enable sitemap check (y/n)**.
+    - If sitemap check is enabled, it will also ask for the **Sitemap URL**.
     - You can press `Enter` to use the default values shown in the prompt.
 
 ## Output

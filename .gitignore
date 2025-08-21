@@ -1,3 +1,4 @@
 /__pycache__
-seo_audit_raw_data.csv
-seo_audit_report.xlsx
+*.csv
+*.xlsx
+*.log

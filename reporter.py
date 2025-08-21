@@ -1,10 +1,22 @@
 import pandas as pd
 from openpyxl.styles import PatternFill, Font
+from openpyxl.worksheet.datavalidation import DataValidation
 from config import ISSUE_DETAILS, HEADER_COLOR
+import datetime
+from urllib.parse import urlparse
+import re
 
 def generate_xlsx_report(issues, base_url, crawled_count):
     """Analyzes the data and generates a styled report in XLSX format."""
-    report_filename = "seo_audit_report.xlsx"
+    # Sanitize base_url for filename
+    parsed_url = urlparse(base_url)
+    domain_name = parsed_url.netloc.replace("www.", "").replace(".", "_") # Replace dots with underscores
+    domain_name = re.sub(r'[^a-zA-Z0-9_ -]', '', domain_name) # Remove other invalid characters
+    
+    # Get current timestamp
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    report_filename = f"seo_audit_report_{domain_name}_{timestamp}.xlsx"
     with pd.ExcelWriter(report_filename, engine='openpyxl') as writer:
         # --- Styles ---
         header_fill = PatternFill(start_color=HEADER_COLOR, end_color=HEADER_COLOR, fill_type="solid")
@@ -32,12 +44,33 @@ def generate_xlsx_report(issues, base_url, crawled_count):
             info_df = pd.DataFrame([{"Info": details["description"]}, {"Info": details["recommendation"]}])
             info_df.to_excel(writer, sheet_name=sheet_name, index=False, header=False, startrow=0)
 
-            # Create DataFrame from issue data
+            # Create DataFrame from issue data and add 'Status' column
             issue_df = pd.DataFrame(data)
+            issue_df["Status"] = "Pending" # Initialize with default status
             
             if not issue_df.empty:
                 issue_df.to_excel(writer, sheet_name=sheet_name, index=False, startrow=3)
                 ws = writer.sheets[sheet_name]
+                
+                # Define status options for data validation
+                status_options = ['Pending', 'In Progress', 'Completed']
+
+                # Apply Data Validation for 'Status' column
+                # Assuming 'Status' column is the last one added (index len(issue_df.columns) - 1)
+                status_col_index = len(issue_df.columns)
+                status_col_letter = chr(ord('A') + status_col_index - 1)
+                
+                # Start from row 5 (after header, description, recommendation, and data header)
+                start_row_data = 5
+                end_row_data = len(issue_df) + start_row_data - 1
+
+                # Define the range for data validation using sqref
+                data_validation_range = f'{status_col_letter}{start_row_data}:{status_col_letter}{end_row_data}'
+                dv = DataValidation(type="list", formula1=f'"{",".join(status_options)}"', showDropDown=True, sqref=data_validation_range)
+
+                # Add data validation to the worksheet for this sheet
+                ws.add_data_validation(dv)
+
                 # Style headers
                 for cell in ws[1] + ws[2]: # Description and Recommendation
                     cell.fill = header_fill
@@ -53,7 +86,7 @@ def generate_xlsx_report(issues, base_url, crawled_count):
                 max_length = 0
                 for cell in column_cells:
                     try:
-                        if len(str(cell.value)) > max_length:
+                        if cell.value is not None and len(str(cell.value)) > max_length:
                             max_length = len(str(cell.value))
                     except:
                         pass

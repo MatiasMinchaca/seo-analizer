@@ -16,6 +16,7 @@ def parse_page(url, html, base_netloc):
     
     # --- Headings ---
     h1s = [h1.get_text(strip=True) for h1 in soup.find_all("h1")]
+    h2s = [h2.get_text(strip=True) for h2 in soup.find_all("h2")]
 
     # --- Canonicals ---
     canonical_tags = soup.find_all("link", rel="canonical")
@@ -30,6 +31,7 @@ def parse_page(url, html, base_netloc):
     # --- Links ---
     internal_links = set()
     external_links = set()
+    all_links = []
     for a in soup.find_all("a", href=True):
         href = a["href"]
         if not href or href.startswith(('#', 'mailto:', 'tel:')):
@@ -39,6 +41,11 @@ def parse_page(url, html, base_netloc):
         # Normalize every link found
         normalized_link = normalize_url(full_url)
         parsed_full_url = urlparse(normalized_link)
+
+        # Get anchor text
+        anchor_text = a.get_text(strip=True)
+
+        all_links.append({"url": normalized_link, "anchor_text": anchor_text})
 
         if parsed_full_url.netloc.replace("www.", "") == base_netloc:
             internal_links.add(normalized_link)
@@ -67,10 +74,12 @@ def parse_page(url, html, base_netloc):
         "title": title,
         "meta_descriptions": meta_descriptions,
         "h1s": h1s,
+        "h2s": h2s,
         "canonicals": canonicals,
         "word_count": word_count,
         "content_hash": content_hash,
         "internal_links": list(internal_links),
         "external_links": list(external_links),
         "images": images,
+        "all_links": all_links,
     }

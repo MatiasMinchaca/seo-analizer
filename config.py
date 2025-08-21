@@ -1,6 +1,5 @@
 # --- CHECKS TO RUN ---
 # Warning: Enabling image size check will significantly slow down the audit
-ENABLE_IMAGE_SIZE_CHECK = False 
 
 # --- REPORT STYLING ---
 HEADER_COLOR = "9a86ff"
@@ -11,6 +10,7 @@ TITLE_MAX_LENGTH = 60
 META_DESC_MIN_LENGTH = 70
 META_DESC_MAX_LENGTH = 160
 H1_MAX_LENGTH = 70
+H2_MAX_LENGTH = 150 # New: Max length for H2 tags
 LOW_WORD_COUNT_THRESHOLD = 300 # For blog posts or important pages
 IMAGE_SIZE_THRESHOLD_KB = 100 # Images larger than this (in KB) will be flagged
 
@@ -80,6 +80,27 @@ ISSUE_DETAILS = {
         "description": "Issue: Multiple pages share the same primary H1 tag.",
         "recommendation": "Recommendation: Write a unique H1 for each page that reflects its specific content."
     },
+    # H2 Headings
+    "Missing_H2s": {
+        "sheet_name": "Missing H2",
+        "description": "Issue: Pages without any H2 tags, which are crucial for content organization.",
+        "recommendation": "Recommendation: Add H2 tags to break down content into logical sections and improve readability."
+    },
+    "Long_H2s": {
+        "sheet_name": "H2 Too Long",
+        "description": f"Issue: H2 tags with more than {H2_MAX_LENGTH} characters.",
+        "recommendation": "Recommendation: Keep H2 tags concise and descriptive of the subsection they introduce."
+    },
+    "Multiple_H2s": {
+        "sheet_name": "Multiple H2",
+        "description": "Issue: Pages with an unusually high number of H2 tags might indicate poor content structure.",
+        "recommendation": "Recommendation: Review pages with many H2s. Consider using H3-H6 for further content hierarchy or simplifying the structure."
+    },
+    "Duplicate_H2s": {
+        "sheet_name": "Duplicate H2",
+        "description": "Issue: Multiple pages share the same primary H2 tag, indicating potential keyword cannibalization or poor differentiation.",
+        "recommendation": "Recommendation: Ensure H2s are unique across pages where content significantly differs."
+    },
     # Content
     "Low_Word_Count": {
         "sheet_name": "Low Word Count",
@@ -102,5 +123,27 @@ ISSUE_DETAILS = {
         "sheet_name": "Non-Self-Referencing Canonical",
         "description": "Issue: The canonical URL does not match the page URL.",
         "recommendation": "Recommendation: This may be intentional for duplicate pages. Review to ensure the canonical points to the correct primary page."
+    },
+    # Broken Links
+    "Broken_Links": {
+        "sheet_name": "Broken Links 4xx-5xx",
+        "description": "Issue: These links returned a 4xx (client error) or 5xx (server error) status code.",
+        "recommendation": "Recommendation: Update or remove these broken links to improve user experience and SEO."
+    },
+    # Sitemap Issues
+    "Sitemap_Only_URLs": {
+        "sheet_name": "Sitemap Only URLs",
+        "description": "Issue: These URLs are present in the sitemap but were not found during the crawl. This could indicate crawlability issues or outdated sitemap entries.",
+        "recommendation": "Recommendation: Verify these URLs are crawlable and reachable. If not, investigate robots.txt, noindex tags, or remove them from the sitemap."
+    },
+    "Crawled_Only_URLs": {
+        "sheet_name": "Crawled Only URLs",
+        "description": "Issue: These URLs were found during the crawl but are not present in the sitemap. This means they might not be properly submitted to search engines.",
+        "recommendation": "Recommendation: Review these URLs and add important ones to your sitemap to ensure search engines are aware of them."
+    },
+    "Sitemap_Broken_Links": {
+        "sheet_name": "Sitemap Broken Links",
+        "description": "Issue: These URLs are listed in the sitemap but returned a 4xx (client error) or 5xx (server error) status code.",
+        "recommendation": "Recommendation: Remove or correct these broken links in your sitemap. Broken links in the sitemap can negatively impact crawl efficiency."
     },
 }

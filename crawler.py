@@ -5,6 +5,7 @@ from collections import deque
 from urllib.parse import urlparse
 from parser import parse_page
 from utils import normalize_url
+import xml.etree.ElementTree as ET
 
 HEADERS = {"User-Agent": "SEO-Audit-Bot/6.0"}
 
@@ -42,14 +43,20 @@ def crawl_site(base_url, max_pages):
             head_response = requests.head(url, headers=HEADERS, timeout=5, allow_redirects=True)
             content_type = head_response.headers.get("Content-Type", "")
             final_url = normalize_url(head_response.url)
+            final_netloc = urlparse(final_url).netloc.replace("www.", "")
 
             if final_url in visited and final_url != url:
                 print(f"  -> Redirected to already visited page: {final_url}")
                 continue
             
+            if final_netloc != base_netloc:
+                print(f"  -> Skipping {final_url}: Redirected outside base domain.")
+                visited.add(final_url) # Mark as visited so we don't check it again
+                continue
+
             if "text/html" not in content_type:
                 print(f"  -> Skipping non-HTML content: {content_type}")
-                visited.add(final_url)
+                visited.add(final_url) # Mark as visited so we don't check it again
                 continue
 
         except requests.RequestException as e:
@@ -73,3 +80,29 @@ def crawl_site(base_url, max_pages):
                 queue.append(link)
     
     return crawled_data
+
+def fetch_sitemap(sitemap_url):
+    """Downloads and parses a sitemap.xml file, returning a list of URLs."""
+    print(f"Fetching sitemap from: {sitemap_url}")
+    urls = set()
+    try:
+        response = requests.get(sitemap_url, headers=HEADERS, timeout=10)
+        response.raise_for_status() # Raise an exception for HTTP errors
+        
+        root = ET.fromstring(response.content)
+        # Namespace for sitemap XML
+        namespace = {'ns': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
+        
+        for url_element in root.findall('ns:url', namespace):
+            loc_element = url_element.find('ns:loc', namespace)
+            if loc_element is not None and loc_element.text:
+                urls.add(normalize_url(loc_element.text))
+                
+    except requests.RequestException as e:
+        print(f"  -> Error fetching sitemap {sitemap_url}: {e}")
+    except ET.ParseError as e:
+        print(f"  -> Error parsing sitemap XML from {sitemap_url}: {e}")
+    except Exception as e:
+        print(f"  -> An unexpected error occurred while processing sitemap {sitemap_url}: {e}")
+
+    return list(urls)
