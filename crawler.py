@@ -34,7 +34,7 @@ def crawl_site(base_url, max_pages):
         print(f"Crawling [{len(crawled_data) + 1}/{max_pages}]: {url}")
 
         if len(crawled_data) > 0 and (len(crawled_data) % 100 == 0 or len(crawled_data) == next_pause_at):
-            wait_time = random.randint(300, 800)  # 5 to 10 minutes in seconds
+            wait_time = random.randint(50, 80) 
             print(f"Pausing for {wait_time // 60} minutes ({wait_time} seconds) to avoid being blocked...")
             time.sleep(wait_time)
             next_pause_at = len(crawled_data) + random.randint(30, 80)

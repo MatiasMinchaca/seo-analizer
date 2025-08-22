@@ -13,6 +13,7 @@ This is a Python-based SEO auditing tool that crawls a website to analyze its on
   - **Canonicals:** Missing, multiple, or non-self-referencing canonical tags.
   - **Broken Links:** Identifies 4xx (client error) and 5xx (server error) status codes for internal page links and sitemap URLs.
   - **Sitemap Analysis:** Compares crawled URLs with sitemap URLs to find discrepancies and broken links within the sitemap.
+  - **Hreflang Tags:** Identifies pages missing hreflang tags, which are crucial for international/multilingual sites.
 - **Styled Excel Reports:** Generates a professional `.xlsx` report with issues separated into sheets, including descriptions and recommendations.
 - **Interactive Execution:** Prompts for the target URL and page limit at runtime.
 - **Configurable:** Advanced options can be configured in the `config.py` file.
@@ -50,6 +51,7 @@ pip install requests beautifulsoup4 pandas openpyxl
     - It will then ask for the **maximum number of pages** to crawl.
     - You will be asked if you want to **enable image size check (y/n)**.
     - You will be asked if you want to **enable sitemap check (y/n)**.
+    - The hreflang check runs by default.
     - If sitemap check is enabled, it will also ask for the **Sitemap URL**.
     - You can press `Enter` to use the default values shown in the prompt.
 

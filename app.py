@@ -24,7 +24,6 @@ def main():
         except ValueError:
             print("Invalid input. Please enter a number.")
 
-    # New: Ask user for image size check preference
     while True:
         enable_image_check_input = input("Enable image size check? (y/n, default: n): ").lower()
         if enable_image_check_input in ('', 'n', 'no'):
@@ -37,7 +36,6 @@ def main():
             print("Invalid input. Please enter 'y' or 'n'.")
 
     sitemap_url = None
-    # New: Ask user for sitemap check preference
     while True:
         enable_sitemap_check_input = input("Enable sitemap check? (y/n, default: y): ").lower()
         if enable_sitemap_check_input in ('', 'y', 'yes'):

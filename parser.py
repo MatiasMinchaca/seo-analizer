@@ -23,6 +23,15 @@ def parse_page(url, html, base_netloc):
     # Normalize canonical URLs as well
     canonicals = [normalize_url(tag["href"].strip()) for tag in canonical_tags if tag.has_attr("href")]
 
+    # --- Hreflang Tags ---
+    hreflang_tags = []
+    for link_tag in soup.find_all("link", rel="alternate", hreflang=True):
+        if link_tag.has_attr("href") and link_tag.has_attr("hreflang"):
+            hreflang_tags.append({
+                "hreflang": link_tag["hreflang"].strip(),
+                "href": normalize_url(link_tag["href"].strip())
+            })
+
     # --- Content Analysis ---
     text_content = soup.get_text(separator=' ', strip=True)
     word_count = len(text_content.split())
@@ -76,6 +85,7 @@ def parse_page(url, html, base_netloc):
         "h1s": h1s,
         "h2s": h2s,
         "canonicals": canonicals,
+        "hreflangs": hreflang_tags,
         "word_count": word_count,
         "content_hash": content_hash,
         "internal_links": list(internal_links),

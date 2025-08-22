@@ -22,6 +22,7 @@ def run_audit(crawled_data, max_links_to_check, sitemap_url=None, enable_image_s
     word_counts = {p['url']: p['word_count'] for p in crawled_data}
     canonicals = {p['url']: p['canonicals'] for p in crawled_data}
     images = {p['url']: p['images'] for p in crawled_data}
+    hreflangs = {p['url']: p['hreflangs'] for p in crawled_data}
 
     # Convert crawled_data to a set of URLs for easy comparison
     crawled_urls = {p['url'] for p in crawled_data}
@@ -91,6 +92,14 @@ def run_audit(crawled_data, max_links_to_check, sitemap_url=None, enable_image_s
             issues.update(sitemap_issues)
         else:
             print(f"  -> Warning: No URLs found in sitemap at {sitemap_url}")
+    
+    # --- Hreflang Check ---
+    print("Checking hreflang tags...")
+    # Pages missing any hreflang tags
+    issues["Missing_Hreflang"] = [{"URL": url} for url, hflangs in hreflangs.items() if not hflangs]
+    
+    # Placeholder for more advanced hreflang validation (e.g., broken links, return tags)
+    # issues["Hreflang_Issues"] = check_advanced_hreflang_issues(crawled_data)
 
     return {key: val for key, val in issues.items() if val}
 

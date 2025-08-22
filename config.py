@@ -1,6 +1,3 @@
-# --- CHECKS TO RUN ---
-# Warning: Enabling image size check will significantly slow down the audit
-
 # --- REPORT STYLING ---
 HEADER_COLOR = "9a86ff"
 
@@ -10,7 +7,7 @@ TITLE_MAX_LENGTH = 60
 META_DESC_MIN_LENGTH = 70
 META_DESC_MAX_LENGTH = 160
 H1_MAX_LENGTH = 70
-H2_MAX_LENGTH = 150 # New: Max length for H2 tags
+H2_MAX_LENGTH = 150
 LOW_WORD_COUNT_THRESHOLD = 300 # For blog posts or important pages
 IMAGE_SIZE_THRESHOLD_KB = 100 # Images larger than this (in KB) will be flagged
 
@@ -123,6 +120,17 @@ ISSUE_DETAILS = {
         "sheet_name": "Non-Self-Referencing Canonical",
         "description": "Issue: The canonical URL does not match the page URL.",
         "recommendation": "Recommendation: This may be intentional for duplicate pages. Review to ensure the canonical points to the correct primary page."
+    },
+    # Hreflang Issues
+    "Missing_Hreflang": {
+        "sheet_name": "Missing Hreflang Tags",
+        "description": "Issue: Pages are missing hreflang tags, which are crucial for international SEO.",
+        "recommendation": "Recommendation: Implement hreflang tags on all international/multilingual pages, ensuring each page references itself and all alternate versions."
+    },
+    "Hreflang_Issues": {
+        "sheet_name": "Hreflang Issues (Advanced)",
+        "description": "Issue: Potential problems with hreflang implementation (e.g., incorrect syntax, broken URLs, missing return tags). This requires manual inspection.",
+        "recommendation": "Recommendation: Manually verify the hreflang implementation using Google Search Console or a third-party tool. Ensure all URLs are valid, self-referencing, and have reciprocal links."
     },
     # Broken Links
     "Broken_Links": {
