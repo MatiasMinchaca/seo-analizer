@@ -4,7 +4,8 @@ from config import (
     TITLE_MIN_LENGTH, TITLE_MAX_LENGTH, META_DESC_MIN_LENGTH, 
     META_DESC_MAX_LENGTH, H1_MAX_LENGTH, LOW_WORD_COUNT_THRESHOLD,
     IMAGE_SIZE_THRESHOLD_KB,
-    H2_MAX_LENGTH 
+    H2_MAX_LENGTH,
+    DECORATIVE_IMAGE_KEYWORDS
 )
 from crawler import fetch_sitemap
 
@@ -55,8 +56,11 @@ def run_audit(crawled_data, max_links_to_check, sitemap_url=None, enable_image_s
     missing_alts = []
     for url, img_list in images.items():
         for img in img_list:
+            # If alt text is missing, check if it's a decorative image before flagging
             if not img['alt']:
-                missing_alts.append({"URL": url, "Image Source": img['src']})
+                src_lower = img['src'].lower()
+                if not any(keyword in src_lower for keyword in DECORATIVE_IMAGE_KEYWORDS):
+                    missing_alts.append({"URL": url, "Image Source": img['src']})
     issues["Img_Missing_Alt"] = missing_alts
 
     issues["Non_Self_Canonicals"] = [{"URL": url, "Canonical URL": cans[0]} for url, cans in canonicals.items() if len(cans) == 1 and url != cans[0]]

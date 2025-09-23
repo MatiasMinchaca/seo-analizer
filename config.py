@@ -10,6 +10,7 @@ H1_MAX_LENGTH = 70
 H2_MAX_LENGTH = 150
 LOW_WORD_COUNT_THRESHOLD = 300 # For blog posts or important pages
 IMAGE_SIZE_THRESHOLD_KB = 100 # Images larger than this (in KB) will be flagged
+DECORATIVE_IMAGE_KEYWORDS = ["icon", "sprite", "logo", "arrow", "bg-", "background", "vector"]
 
 # --- ISSUE DEFINITIONS --- 
 # This dictionary maps internal issue keys to their descriptions for the report.
