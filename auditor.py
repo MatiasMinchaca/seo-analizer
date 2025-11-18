@@ -4,8 +4,7 @@ from config import (
     TITLE_MIN_LENGTH, TITLE_MAX_LENGTH, META_DESC_MIN_LENGTH, 
     META_DESC_MAX_LENGTH, H1_MAX_LENGTH, LOW_WORD_COUNT_THRESHOLD,
     IMAGE_SIZE_THRESHOLD_KB,
-    H2_MAX_LENGTH,
-    DECORATIVE_IMAGE_KEYWORDS
+    H2_MAX_LENGTH
 )
 from crawler import fetch_sitemap
 
@@ -47,21 +46,28 @@ def run_audit(crawled_data, max_links_to_check, sitemap_url=None, enable_image_s
 
     # New: H2 Checks
     issues["Missing_H2s"] = [{"URL": url} for url, h2_list in h2s.items() if not h2_list]
-    issues["Multiple_H2s"] = [{"URL": url, "Count": len(h2_list)} for url, h2_list in h2s.items() if len(h2_list) > 1]
-    issues["Long_H2s"] = [{"URL": url, "H2": h2, "Length": len(h2)} for url, h2_list in h2s.items() for h2 in h2_list if len(h2) > H2_MAX_LENGTH]
-    issues["Duplicate_H2s"] = find_duplicates({k: v[0] for k, v in h2s.items() if len(v) == 1})
+    # issues["Multiple_H2s"] = [{"URL": url, "Count": len(h2_list)} for url, h2_list in h2s.items() if len(h2_list) > 1]
+    # issues["Long_H2s"] = [{"URL": url, "H2": h2, "Length": len(h2)} for url, h2_list in h2s.items() for h2 in h2_list if len(h2) > H2_MAX_LENGTH]
+    # issues["Duplicate_H2s"] = find_duplicates({k: v[0] for k, v in h2s.items() if len(v) == 1})
 
     issues["Low_Word_Count"] = [{"URL": url, "Word Count": count} for url, count in word_counts.items() if count < LOW_WORD_COUNT_THRESHOLD]
     
-    missing_alts = []
+    # Image Alt Text Checks
+    missing_alt_images = defaultdict(list)
     for url, img_list in images.items():
         for img in img_list:
-            # If alt text is missing, check if it's a decorative image before flagging
-            if not img['alt']:
-                src_lower = img['src'].lower()
-                if not any(keyword in src_lower for keyword in DECORATIVE_IMAGE_KEYWORDS):
-                    missing_alts.append({"URL": url, "Image Source": img['src']})
-    issues["Img_Missing_Alt"] = missing_alts
+            if img['alt'] is None:  # Attribute truly missing
+                missing_alt_images[img['src']].append(url)
+
+    # Format the issues for the report, grouping by image source
+    missing_alt_attribute_issues = []
+    for img_src, page_urls in missing_alt_images.items():
+        missing_alt_attribute_issues.append({
+            "Image Source": img_src,
+            "Found on URLs": list(set(page_urls))  # Use set to remove duplicates
+        })
+
+    issues["Img_Missing_Alt_Attribute"] = missing_alt_attribute_issues
 
     issues["Non_Self_Canonicals"] = [{"URL": url, "Canonical URL": cans[0]} for url, cans in canonicals.items() if len(cans) == 1 and url != cans[0]]
 
@@ -83,10 +89,14 @@ def run_audit(crawled_data, max_links_to_check, sitemap_url=None, enable_image_s
 
     # --- Broken Links Check ---
     print("Checking for broken links... (This may take a while)")
-    internal_links_from_crawled_pages = [
-        link for p in crawled_data for link in p.get("internal_links", [])
-    ]
-    issues["Broken_Links"] = check_urls_for_broken_links(internal_links_from_crawled_pages, max_links_to_check, "Internal Page Links")
+    links_with_sources = defaultdict(list)
+    for p in crawled_data:
+        for link in p.get("internal_links", []):
+            links_with_sources[link].append(p['url'])
+
+    issues["Broken_Links"] = check_urls_for_broken_links(
+        links_with_sources, max_links_to_check, "Internal Page Links"
+    )
 
     # --- Sitemap Check ---
     if enable_sitemap_check and sitemap_url:
@@ -108,23 +118,39 @@ def run_audit(crawled_data, max_links_to_check, sitemap_url=None, enable_image_s
     return {key: val for key, val in issues.items() if val}
 
 def check_urls_for_broken_links(urls_to_check, max_to_check, link_source="Page Content"):
-    """Checks a list of URLs for broken links (404, 5xx, etc.).
-    link_source is used for reporting context (e.g., 'Page Content' or 'Sitemap')."""
+    """
+    Checks for broken links.
+    urls_to_check can be a list of URLs or a dict of {url: [sources]}.
+    link_source is used for reporting context (e.g., 'Page Content' or 'Sitemap').
+    """
     broken_links = []
-    unique_urls = list(set(urls_to_check))
+    is_dict = isinstance(urls_to_check, dict)
 
-    # Limit the number of links to check
+    if is_dict:
+        unique_urls = list(urls_to_check.keys())
+    else:
+        unique_urls = list(set(urls_to_check))
+
     limited_urls = unique_urls[:max_to_check]
     print(f"  -> Checking a maximum of {len(limited_urls)} unique links from {link_source}...")
 
     for url in limited_urls:
         try:
-            # Using a fixed timeout of 5 seconds for now
             response = requests.head(url, headers=HEADERS, timeout=5, allow_redirects=True)
             if response.status_code >= 400:
-                broken_links.append({"URL": url, "Status Code": response.status_code, "Source": link_source})
+                issue = {"URL": url, "Status Code": response.status_code}
+                if is_dict:
+                    issue["Found on URLs"] = list(set(urls_to_check[url]))
+                else:
+                    issue["Source"] = link_source
+                broken_links.append(issue)
         except requests.RequestException as e:
-            broken_links.append({"URL": url, "Error": str(e), "Status Code": "N/A", "Source": link_source})
+            issue = {"URL": url, "Error": str(e), "Status Code": "N/A"}
+            if is_dict:
+                issue["Found on URLs"] = list(set(urls_to_check[url]))
+            else:
+                issue["Source"] = link_source
+            broken_links.append(issue)
     return broken_links
 
 def check_sitemap_issues(crawled_urls, sitemap_urls, max_links_to_check):

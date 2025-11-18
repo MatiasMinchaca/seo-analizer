@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 import hashlib
 from utils import normalize_url
+import re
 
 def parse_page(url, html, base_netloc):
     """Extracts all relevant SEO data from a single HTML page."""
@@ -11,7 +12,9 @@ def parse_page(url, html, base_netloc):
     title = soup.title.string.strip() if soup.title else ""
     
     # --- Meta Descriptions ---
-    meta_desc_tags = soup.find_all("meta", attrs={"name": "description"})
+    meta_desc_tags = soup.find_all("meta", attrs={"name": re.compile(r"^description$", re.IGNORECASE)})
+    if not meta_desc_tags:
+        meta_desc_tags = soup.find_all("meta", attrs={"property": "og:description"})
     meta_descriptions = [tag["content"].strip() for tag in meta_desc_tags if tag.has_attr("content")]
     
     # --- Headings ---
@@ -73,10 +76,13 @@ def parse_page(url, html, base_netloc):
             continue
 
         # Prioritize data-alt for lazy-loaded images, then fall back to alt
-        alt = img.get('data-alt') or img.get('alt', '')
+        if 'data-alt' in img.attrs:
+            alt = img.get('data-alt')
+        else:
+            alt = img.get('alt') # This will be None if 'alt' attribute is missing
         
         full_src_url = urljoin(url, src)
-        images.append({"src": full_src_url, "alt": alt.strip()})
+        images.append({"src": full_src_url, "alt": alt.strip() if alt is not None else None})
 
     return {
         "url": url,
